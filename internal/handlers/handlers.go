@@ -14,7 +14,7 @@ func BadRequest(res http.ResponseWriter, _ *http.Request) {
 }
 
 func updateValidator(splURI []string, req *http.Request) bool {
-	if len(splURI) == 2 ||
+	if len(splURI) <= 2 ||
 		len(splURI) != 4 ||
 		!ch.CheckMetricType(splURI[1]) ||
 		!ch.CheckContentType(req) {
@@ -38,13 +38,14 @@ func (h *handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 
 		splURI := strings.Split(strings.Trim(req.RequestURI, "/"), "/")
 
-		if updateValidator(splURI, req) {
-			if len(splURI) == 2 {
-				res.WriteHeader(http.StatusNotFound)
-				return
-			}
+		if len(splURI) == 2 && ch.CheckMetricType(splURI[1]) {
+			res.WriteHeader(http.StatusNotFound)
 
+			return
+		}
+		if updateValidator(splURI, req) {
 			BadRequest(res, req)
+			return
 		}
 
 		metricType := splURI[1]
