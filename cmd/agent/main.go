@@ -74,18 +74,20 @@ func sendData(data st.Storage) {
 	for name, value := range data.GetStorage().Gauge {
 		url := name + "/" + fmt.Sprintf("%v", value)
 		//fmt.Println(Host + "update/gauge/" + url) // Для тестов
-		resp, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
-		if err != nil || resp.Status != "200 OK" {
+		_, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
+		if err != nil {
 			fmt.Println("Bad response", name, value) // Для теста
 		}
-		_ = resp.Body.Close()
+		//_ = resp1.Body.Close() // Тут все хорошо
 	}
-	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
-	resp, err := http.Post(Host+url, "text/plain", nil)
-	if err != nil || resp.Status != "200 OK" {
-		fmt.Println("Bad response", "PollCount", PollCount) // Для теста
+	for i := 0; i < 1; i++ {
+		url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
+		_, err := http.Post(Host+url, "text/plain", nil)
+		if err != nil {
+			fmt.Println("Bad response", "PollCount", PollCount) // Для теста
+		}
+		//_ = resp2.Body.Close() // По непонятной причине тут падает
 	}
-
 	Mutex.Unlock()
 }
 
