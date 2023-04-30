@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 )
 
 func main() {
@@ -11,7 +12,12 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(`/`, handlers.BadRequest)
-	mux.HandleFunc(`/update/`, handlers.UpdateMetrics)
+
+	st := storage.New()
+
+	handlerUpdate := handlers.NewHandlerStorage(st)
+
+	mux.HandleFunc(`/update/`, handlerUpdate.UpdateMetrics)
 
 	err := http.ListenAndServe(`:8080`, mux)
 	if err != nil {
