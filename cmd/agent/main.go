@@ -78,10 +78,13 @@ func sendGauge(name string, data st.Storage) {
 		fmt.Println("Bad response", name, value) // Для теста
 		return
 	}
-	//_ = resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return
+	}
 }
 
-func sendCounter(data st.Storage) {
+func sendCounter() {
 	//for i := 0; i < 1; i++ {
 	//	resp := http.Response{
 	//		Body: io.NopCloser(bytes.NewBufferString("Hello World")),
@@ -92,8 +95,11 @@ func sendCounter(data st.Storage) {
 		fmt.Println("Bad response", "PollCount", PollCount) // Для теста
 		return
 	}
-	_ = resp.Body.Close()
-	//}
+	err = resp.Body.Close()
+	if err != nil {
+		return
+	}
+
 }
 
 func sendData(data st.Storage) {
@@ -105,7 +111,7 @@ func sendData(data st.Storage) {
 
 	Mutex.Lock()
 
-	for name, _ := range data.GetStorage().Gauge {
+	for name := range data.GetStorage().Gauge {
 		sendGauge(name, data.GetStorage())
 		//resp := http.Response{
 		//	Body: io.NopCloser(bytes.NewBufferString("Hello World")),
@@ -129,7 +135,7 @@ func sendData(data st.Storage) {
 	//	}
 	//	_ = resp.Body.Close()
 	//}
-	sendCounter(data.GetStorage())
+	sendCounter()
 	Mutex.Unlock()
 	//_ = resp.Body.Close()
 }
