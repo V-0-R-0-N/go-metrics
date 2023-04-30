@@ -24,14 +24,13 @@ var (
 func collectData(data st.Storage) {
 
 	res := runtime.MemStats{}
-	rand.Seed(time.Now().UnixNano())
-
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	time.Sleep(pollInterval)
 	runtime.ReadMemStats(&res)
 
 	Mutex.Lock()
 
-	randomV := st.Float64ToGauge(float64(rand.Intn(1000))) *
+	randomV := st.Float64ToGauge(float64(r.Intn(1000))) *
 		st.Float64ToGauge(rand.Float64())
 	data.PutGauge("RandomValue", randomV)
 	PollCount++
@@ -77,14 +76,16 @@ func sendData(data st.Storage) {
 		//fmt.Println(Host + "update/gauge/" + url) // Для тестов
 		resp, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
 		if err != nil || resp.Status != "200 OK" {
-			//fmt.Println("Bad response", name, value) // Для теста
+			fmt.Println("Bad response", name, value) // Для теста
 		}
+		_ = resp.Body.Close()
 	}
 	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
 	resp, err := http.Post(Host+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
-		//fmt.Println("Bad response", "PollCount", PollCount) // Для теста
+		fmt.Println("Bad response", "PollCount", PollCount) // Для теста
 	}
+
 	Mutex.Unlock()
 }
 

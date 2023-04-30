@@ -147,6 +147,7 @@ func TestUpdateMetrics(t *testing.T) {
 			h := NewHandlerStorage(st.New())
 			h.UpdateMetrics(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 			fmt.Println(test.name, res.StatusCode)
 			assert.Equal(t, res.StatusCode, test.want.code)
 		})
@@ -197,6 +198,7 @@ func TestBadRequest(t *testing.T) {
 			w := httptest.NewRecorder()
 			BadRequest(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 			assert.Equal(t, res.StatusCode, test.want.code)
 		})
 	}
