@@ -14,7 +14,7 @@ import (
 var (
 	pollInterval   = 2 * time.Second
 	reportInterval = 10 * time.Second
-	//data           = st.Memory
+
 	wg        = sync.WaitGroup{}
 	PollCount = st.IntToCounter(0)
 	Host      = "http://localhost:8080/"
@@ -67,9 +67,7 @@ func collectData(data st.Storage) {
 }
 
 func sendGauge(name string, data st.Storage) {
-	//resp := http.Response{
-	//	Body: io.NopCloser(bytes.NewBufferString("Hello World")),
-	//}
+
 	value := data.GetStorage().GetGauge(name)
 	url := name + "/" + fmt.Sprintf("%v", value)
 	//fmt.Println(Host + "update/gauge/" + url) // Для тестов
@@ -85,10 +83,7 @@ func sendGauge(name string, data st.Storage) {
 }
 
 func sendCounter() {
-	//for i := 0; i < 1; i++ {
-	//	resp := http.Response{
-	//		Body: io.NopCloser(bytes.NewBufferString("Hello World")),
-	//	}
+
 	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
 	resp, err := http.Post(Host+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
@@ -105,39 +100,15 @@ func sendCounter() {
 func sendData(data st.Storage) {
 
 	time.Sleep(reportInterval)
-	//resp := http.Response{
-	//	Body: io.NopCloser(bytes.NewBufferString("Hello World")),
-	//}
 
 	Mutex.Lock()
 
 	for name := range data.GetStorage().Gauge {
 		sendGauge(name, data.GetStorage())
-		//resp := http.Response{
-		//	Body: io.NopCloser(bytes.NewBufferString("Hello World")),
-		//}
-		//url := name + "/" + fmt.Sprintf("%v", value)
-		////fmt.Println(Host + "update/gauge/" + url) // Для тестов
-		//resp, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
-		//if err != nil || resp.Status != "200 OK" {
-		//	fmt.Println("Bad response", name, value) // Для теста
-		//}
-		////_ = resp.Body.Close()
 	}
-	//for i := 0; i < 1; i++ {
-	//	resp := http.Response{
-	//		Body: io.NopCloser(bytes.NewBufferString("Hello World")),
-	//	}
-	//	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
-	//	resp, err := http.Post(Host+url, "text/plain", nil)
-	//	if err != nil || resp.Status != "200 OK" {
-	//		fmt.Println("Bad response", "PollCount", PollCount) // Для теста
-	//	}
-	//	_ = resp.Body.Close()
-	//}
 	sendCounter()
 	Mutex.Unlock()
-	//_ = resp.Body.Close()
+
 }
 
 func main() {
