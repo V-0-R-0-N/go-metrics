@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -73,4 +76,34 @@ func (h *handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 	}
 
 	BadRequest(res, req)
+}
+
+func (h *handler) GetMetrics(res http.ResponseWriter, _ *http.Request) {
+	_, _ = io.WriteString(res, fmt.Sprint(h.storage))
+}
+
+func (h *handler) GetMetricsValue(res http.ResponseWriter, req *http.Request) {
+
+	t := chi.URLParam(req, "type")
+	name := chi.URLParam(req, "name")
+	if t != "gauge" && t != "counter" {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if t == "gauge" {
+		if _, ok := h.storage.GetStorage().Gauge[name]; !ok {
+			res.WriteHeader(http.StatusNotFound)
+			return
+		}
+		res.WriteHeader(http.StatusOK)
+		_, _ = io.WriteString(res, fmt.Sprint(h.storage.GetStorage().Gauge[name]))
+	}
+	if t == "counter" {
+		if _, ok := h.storage.GetStorage().Counter[name]; !ok {
+			res.WriteHeader(http.StatusNotFound)
+			return
+		}
+		res.WriteHeader(http.StatusOK)
+		_, _ = io.WriteString(res, fmt.Sprint(h.storage.GetStorage().Counter[name]))
+	}
 }

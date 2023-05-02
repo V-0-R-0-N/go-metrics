@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 
 	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
@@ -9,17 +11,33 @@ import (
 
 func main() {
 
-	mux := http.NewServeMux()
+	//mux := http.NewServeMux()
 
-	mux.HandleFunc(`/`, handlers.BadRequest)
+	router := chi.NewRouter()
+	router.Use(middleware.Logger) // Для тестов
 
 	st := storage.New()
 
-	handlerUpdate := handlers.NewHandlerStorage(st)
+	handlerStorage := handlers.NewHandlerStorage(st)
 
-	mux.HandleFunc(`/update/`, handlerUpdate.UpdateMetrics)
+	router.Get("/", handlerStorage.GetMetrics)
 
-	err := http.ListenAndServe(`:8080`, mux)
+	// TODO обсудить с ментором
+
+	//router.Route("/update", func(r chi.Router) {
+	//	router.Post("/", handlers.BadRequest)
+	//	router.Route("/{type}", func(r chi.Router) {
+	//		router.Post("/", handlers.BadRequest)
+	//		router.Route("/{name}", func(r chi.Router) {
+	//			router.Post("/", handlers.BadRequest)
+	//			router.Post("/{data}", handlerStorage.UpdateMetrics)
+	//		})
+	//	})
+	//})
+	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
+
+	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
+	err := http.ListenAndServe(`:8080`, router)
 	if err != nil {
 		panic(err)
 	}
