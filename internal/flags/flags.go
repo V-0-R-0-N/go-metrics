@@ -73,7 +73,7 @@ func (r *Report) Set(s string) error {
 		return err
 	}
 	if num <= 0 {
-		return fmt.Errorf("%s\n", "The value cannot be less than or equal to 0")
+		return fmt.Errorf("%s", "The value cannot be less than or equal to 0")
 	}
 	r.Interval = time.Duration(num)
 	return nil
