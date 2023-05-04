@@ -1,20 +1,31 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 
 	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 )
 
+var addr = flags.NetAddress{
+	Host: "localhost",
+	Port: 8080,
+}
+
+func init() {
+
+	flags.Server(&addr)
+}
+
 func main() {
 
-	//mux := http.NewServeMux()
-
+	flag.Parse()
 	router := chi.NewRouter()
-	router.Use(middleware.Logger) // Для тестов
+	//router.Use(middleware.Logger) // Для тестов
 
 	st := storage.New()
 
@@ -37,7 +48,7 @@ func main() {
 	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
 
 	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
-	err := http.ListenAndServe(`:8080`, router)
+	err := http.ListenAndServe(fmt.Sprintf("%s", addr), router)
 	if err != nil {
 		panic(err)
 	}

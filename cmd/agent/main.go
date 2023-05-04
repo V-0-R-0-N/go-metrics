@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -12,20 +14,36 @@ import (
 )
 
 var (
-	pollInterval   = 2 * time.Second
-	reportInterval = 10 * time.Second
+	//pollInterval   = 2 * time.Second
+	//reportInterval = 10 * time.Second
 
 	wg        = sync.WaitGroup{}
 	PollCount = st.IntToCounter(0)
-	Host      = "http://localhost:8080/"
 	Mutex     = sync.Mutex{}
 )
 
+var poll = flags.Poll{
+	Interval: 2,
+}
+
+var report = flags.Report{
+	Interval: 10,
+}
+
+var addr = flags.NetAddress{
+	Host: "localhost",
+	Port: 8080,
+}
+
+func init() {
+
+	flags.Agent(&addr, &poll, &report)
+}
 func collectData(data st.Storage) {
 
 	res := runtime.MemStats{}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	time.Sleep(pollInterval)
+	time.Sleep(poll.Interval)
 	runtime.ReadMemStats(&res)
 
 	Mutex.Lock()
@@ -71,9 +89,10 @@ func sendGauge(name string, data st.Storage) {
 	value := data.GetStorage().GetGauge(name)
 	url := name + "/" + fmt.Sprintf("%v", value)
 	//fmt.Println(Host + "update/gauge/" + url) // Для тестов
+	Host := "http://" + fmt.Sprintf("%s", addr) + "/"
 	resp, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
-		fmt.Println("Bad response", name, value) // Для теста
+		//fmt.Println("Bad response", name, value) // Для теста
 		return
 	}
 	err = resp.Body.Close()
@@ -85,9 +104,10 @@ func sendGauge(name string, data st.Storage) {
 func sendCounter() {
 
 	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
+	Host := "http://" + fmt.Sprintf("%s", addr) + "/"
 	resp, err := http.Post(Host+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
-		fmt.Println("Bad response", "PollCount", PollCount) // Для теста
+		//fmt.Println("Bad response", "PollCount", PollCount) // Для теста
 		return
 	}
 	err = resp.Body.Close()
@@ -99,7 +119,7 @@ func sendCounter() {
 
 func sendData(data st.Storage) {
 
-	time.Sleep(reportInterval)
+	time.Sleep(report.Interval)
 
 	Mutex.Lock()
 
@@ -112,6 +132,8 @@ func sendData(data st.Storage) {
 }
 
 func main() {
+
+	flag.Parse()
 
 	wg.Add(2)
 	data := st.New()
