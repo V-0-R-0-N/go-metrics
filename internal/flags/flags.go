@@ -28,27 +28,27 @@ func (a NetAddress) String() string {
 func (a *NetAddress) Set(s string) error {
 	hp := strings.Split(s, ":")
 	if len(hp) != 2 {
-		return fmt.Errorf("%s\n", "Need address in a form 'host:port' or ':port'")
+		return fmt.Errorf("%s", "Need address in a form 'host:port' or ':port'")
 	}
 	port, err := strconv.Atoi(hp[1])
 	if err != nil {
 		return err
 	}
 	if port < 1025 || port > 65535 {
-		return fmt.Errorf("%s\n", "Incorrect port assignment! Possible range is from 1025 to 65535")
+		return fmt.Errorf("%s", "Incorrect port assignment! Possible range is from 1025 to 65535")
 	}
 	hp[0] = strings.Trim(hp[0], " ")
 	if len(hp[0]) > 0 {
 		a.Host = hp[0]
 	}
 
-	strings.Trim(hp[0], " ")
+	hp[0] = strings.Trim(hp[0], " ")
 	a.Port = port
 	return nil
 }
 
 func (p Poll) String() string {
-	return fmt.Sprintf("%d\n", p.Interval/time.Second)
+	return fmt.Sprintf("%d", p.Interval/time.Second)
 }
 
 func (p *Poll) Set(s string) error {
@@ -57,7 +57,7 @@ func (p *Poll) Set(s string) error {
 		return err
 	}
 	if num <= 0 {
-		return fmt.Errorf("%s\n", "The value cannot be less than or equal to 0")
+		return fmt.Errorf("%s", "The value cannot be less than or equal to 0")
 	}
 	p.Interval = time.Duration(num)
 	return nil

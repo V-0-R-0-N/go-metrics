@@ -89,7 +89,7 @@ func sendGauge(name string, data st.Storage) {
 	value := data.GetStorage().GetGauge(name)
 	url := name + "/" + fmt.Sprintf("%v", value)
 	//fmt.Println(Host + "update/gauge/" + url) // Для тестов
-	Host := "http://" + fmt.Sprintf("%s", addr) + "/"
+	Host := "http://" + addr.String() + "/"
 	resp, err := http.Post(Host+"update/gauge/"+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
 		//fmt.Println("Bad response", name, value) // Для теста
@@ -104,7 +104,7 @@ func sendGauge(name string, data st.Storage) {
 func sendCounter() {
 
 	url := "update/counter/PollCount/" + fmt.Sprintf("%v", PollCount)
-	Host := "http://" + fmt.Sprintf("%s", addr) + "/"
+	Host := "http://" + addr.String() + "/"
 	resp, err := http.Post(Host+url, "text/plain", nil)
 	if err != nil || resp.Status != "200 OK" {
 		//fmt.Println("Bad response", "PollCount", PollCount) // Для теста

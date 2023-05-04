@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -48,7 +47,7 @@ func main() {
 	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
 
 	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
-	err := http.ListenAndServe(fmt.Sprintf("%s", addr), router)
+	err := http.ListenAndServe(addr.String(), router)
 	if err != nil {
 		panic(err)
 	}
