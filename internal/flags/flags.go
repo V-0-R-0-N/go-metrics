@@ -64,7 +64,7 @@ func (p *Poll) Set(s string) error {
 }
 
 func (r Report) String() string {
-	return fmt.Sprintf("%d\n", r.Interval/time.Second)
+	return fmt.Sprintf("%d", r.Interval/time.Second)
 }
 
 func (r *Report) Set(s string) error {
