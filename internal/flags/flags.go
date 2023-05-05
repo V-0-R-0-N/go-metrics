@@ -59,7 +59,7 @@ func (p *Poll) Set(s string) error {
 	if num <= 0 {
 		return fmt.Errorf("%s", "The value cannot be less than or equal to 0")
 	}
-	p.Interval = time.Duration(num)
+	p.Interval = time.Duration(num) * time.Second
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (r *Report) Set(s string) error {
 	if num <= 0 {
 		return fmt.Errorf("%s", "The value cannot be less than or equal to 0")
 	}
-	r.Interval = time.Duration(num)
+	r.Interval = time.Duration(num) * time.Second
 	return nil
 }
 

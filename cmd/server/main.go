@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -23,6 +24,10 @@ func init() {
 func main() {
 
 	flag.Parse()
+	if err := environ.Server(&addr); err != nil {
+		panic(err)
+	}
+
 	router := chi.NewRouter()
 	//router.Use(middleware.Logger) // Для тестов
 
@@ -47,6 +52,7 @@ func main() {
 	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
 
 	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
+
 	err := http.ListenAndServe(addr.String(), router)
 	if err != nil {
 		panic(err)

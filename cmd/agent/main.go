@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"math/rand"
 	"net/http"
@@ -23,11 +24,11 @@ var (
 )
 
 var poll = flags.Poll{
-	Interval: 2,
+	Interval: 2 * time.Second,
 }
 
 var report = flags.Report{
-	Interval: 10,
+	Interval: 10 * time.Second,
 }
 
 var addr = flags.NetAddress{
@@ -133,8 +134,12 @@ func sendData(data st.Storage) {
 
 func main() {
 
+	//fmt.Println(addr, poll.Interval, report.Interval)
 	flag.Parse()
-
+	if err := environ.Agent(&addr, &poll, &report); err != nil {
+		panic(err)
+	}
+	//fmt.Println(addr, poll.Interval, report.Interval) // Для теста
 	wg.Add(2)
 	data := st.New()
 	go func() {
