@@ -79,7 +79,7 @@ func TestPollIntervalSet(t *testing.T) {
 		{
 			name:  "Test 1",
 			data:  "3",
-			want:  3,
+			want:  3 * time.Second,
 			error: false,
 		},
 		{
@@ -120,7 +120,7 @@ func TestReportSet(t *testing.T) {
 		{
 			name:  "Test 1",
 			data:  "3",
-			want:  3,
+			want:  3 * time.Second,
 			error: false,
 		},
 		{
