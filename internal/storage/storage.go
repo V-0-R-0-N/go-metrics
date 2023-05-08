@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 )
 
 type (
@@ -16,37 +17,38 @@ type Storage interface {
 	GetGauge(name string) gauge
 	GetCounter(name string) counter
 
-	GetStorage() MemStorage
+	GetStorage() *memStorage
 }
 
-type MemStorage struct {
+type memStorage struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
 }
 
-func New() Storage {
-	return MemStorage{
+func NewStorage() Storage {
+	return &memStorage{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
 	}
 }
 
-func (m MemStorage) PutGauge(name string, value gauge) {
+func (m *memStorage) PutGauge(name string, value gauge) {
 	m.Gauge[name] = value
 }
 
-func (m MemStorage) PutCounter(name string, value counter) {
+func (m *memStorage) PutCounter(name string, value counter) {
 	m.Counter[name] += value
 }
 
-func (m MemStorage) GetGauge(name string) gauge {
+func (m *memStorage) GetGauge(name string) gauge {
 	return m.Gauge[name]
 }
-func (m MemStorage) GetCounter(name string) counter {
+
+func (m *memStorage) GetCounter(name string) counter {
 	return m.Counter[name]
 }
 
-func (m MemStorage) GetStorage() MemStorage {
+func (m *memStorage) GetStorage() *memStorage {
 	return m
 }
 
@@ -58,15 +60,17 @@ func IntToCounter(v int) counter {
 	return counter(v)
 }
 
-func (m MemStorage) String() string {
-	res := ""
-	res += "Gauge\n"
+func (m *memStorage) String() string {
+	res := strings.Builder{}
+	res.WriteString("Gauge\n")
 	for k, v := range m.Gauge {
-		res += k + ": " + fmt.Sprintf("%v\n", v)
+		res.WriteString(fmt.Sprintf("%21s:\t\t\t%21v\n", k, v))
+		//res += k + ": " + fmt.Sprintf("%v\n", v)
 	}
-	res += "\nCounter\n"
+	res.WriteString("\nCounter\n")
 	for k, v := range m.Counter {
-		res += k + ": " + fmt.Sprintf("%v\n", v)
+		res.WriteString(fmt.Sprintf("%21s:\t\t\t%21v\n", k, v))
+		//res += k + ": " + fmt.Sprintf("%v\n", v)
 	}
-	return res
+	return res.String()
 }

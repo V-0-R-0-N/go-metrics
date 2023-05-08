@@ -1,54 +1,44 @@
 package environ
 
 import (
-	fl "github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"os"
+
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 )
 
-func parseAddr(addr *fl.NetAddress) error {
-	address, ok := os.LookupEnv("ADDRESS")
-	if ok {
-		err := addr.Set(address)
-		if err != nil {
+type allFlags interface {
+	Set(string) error
+}
+
+func parseFlag(data allFlags, name string) error {
+	if value, ok := os.LookupEnv(name); ok {
+		if err := data.Set(value); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func parseAgentPollReport(poll *fl.Poll, report *fl.Report) error {
+func Server(addr *flags.NetAddress) error {
 
-	if p, ok := os.LookupEnv("POLL_INTERVAL"); ok {
-		err := poll.Set(p)
-		if err != nil {
-			return err
-		}
-	}
-	if r, ok := os.LookupEnv("REPORT_INTERVAL"); ok {
-		err := report.Set(r)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func Server(addr *fl.NetAddress) error {
-	err := parseAddr(addr)
-	if err != nil {
+	if err := parseFlag(addr, "ADDRESS"); err != nil {
 		return err
 	}
 	return nil
 }
 
-func Agent(addr *fl.NetAddress, poll *fl.Poll, report *fl.Report) error {
-	err := parseAddr(addr)
+func Agent(addr *flags.NetAddress, poll *flags.Poll, report *flags.Report) error {
+
+	err := parseFlag(addr, "ADDRESS")
 	if err != nil {
 		return err
 	}
-	err = parseAgentPollReport(poll, report)
-	if err != nil {
+	if err = parseFlag(poll, "POLL_INTERVAL"); err != nil {
 		return err
 	}
+	if err = parseFlag(report, "REPORT_INTERVAL"); err != nil {
+		return err
+	}
+
 	return nil
 }

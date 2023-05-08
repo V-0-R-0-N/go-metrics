@@ -42,7 +42,7 @@ func TestPutGauge(t *testing.T) {
 			want: 390.20000000000001,
 		},
 	}
-	mem := New()
+	mem := NewStorage()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mem.PutGauge(test.data.name, Float64ToGauge(test.data.value))
@@ -90,7 +90,7 @@ func TestPutCounter(t *testing.T) {
 			want: 9999999999999999,
 		},
 	}
-	mem := New()
+	mem := NewStorage()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mem.PutCounter(test.data.name, IntToCounter(test.data.value))

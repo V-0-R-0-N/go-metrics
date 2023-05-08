@@ -2,36 +2,31 @@ package main
 
 import (
 	"flag"
-	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
-	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/go-chi/chi/v5"
+	"log"
 	"net/http"
 
+	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 )
 
-var addr = flags.NetAddress{
-	Host: "localhost",
-	Port: 8080,
-}
-
-func init() {
-
-	flags.Server(&addr)
-}
-
 func main() {
-
+	addr := flags.NetAddress{
+		Host: "localhost",
+		Port: 8080,
+	}
+	flags.Server(&addr)
 	flag.Parse()
 	if err := environ.Server(&addr); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	router := chi.NewRouter()
 	//router.Use(middleware.Logger) // Для тестов
 
-	st := storage.New()
+	st := storage.NewStorage()
 
 	handlerStorage := handlers.NewHandlerStorage(st)
 
@@ -55,6 +50,6 @@ func main() {
 
 	err := http.ListenAndServe(addr.String(), router)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

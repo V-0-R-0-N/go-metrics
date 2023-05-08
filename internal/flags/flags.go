@@ -21,8 +21,8 @@ type Report struct {
 	Interval time.Duration
 }
 
-func (a NetAddress) String() string {
-	return a.Host + ":" + strconv.Itoa(a.Port)
+func (a *NetAddress) String() string {
+	return fmt.Sprintf("%s:%s", a.Host, strconv.Itoa(a.Port))
 }
 
 func (a *NetAddress) Set(s string) error {
@@ -47,7 +47,7 @@ func (a *NetAddress) Set(s string) error {
 	return nil
 }
 
-func (p Poll) String() string {
+func (p *Poll) String() string {
 	return fmt.Sprintf("%d", p.Interval/time.Second)
 }
 
@@ -63,7 +63,7 @@ func (p *Poll) Set(s string) error {
 	return nil
 }
 
-func (r Report) String() string {
+func (r *Report) String() string {
 	return fmt.Sprintf("%d", r.Interval/time.Second)
 }
 

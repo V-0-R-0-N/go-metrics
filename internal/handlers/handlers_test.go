@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	st "github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	st "github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 )
 
 func TestUpdateValidator(t *testing.T) {
@@ -87,7 +88,7 @@ func TestUpdateValidator(t *testing.T) {
 
 func TestNewHandlerStorage(t *testing.T) {
 	t.Run("Simple test", func(t *testing.T) {
-		Hand := NewHandlerStorage(st.New())
+		Hand := NewHandlerStorage(st.NewStorage())
 		if Hand == nil {
 			panic("aaa")
 		}
@@ -144,7 +145,7 @@ func TestUpdateMetrics(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, test.want.req, nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			h := NewHandlerStorage(st.New())
+			h := NewHandlerStorage(st.NewStorage())
 			h.UpdateMetrics(w, request)
 			res := w.Result()
 			defer res.Body.Close()

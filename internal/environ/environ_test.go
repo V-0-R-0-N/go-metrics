@@ -1,10 +1,11 @@
 package environ
 
 import (
-	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 )
 
 func TestServer(t *testing.T) {
