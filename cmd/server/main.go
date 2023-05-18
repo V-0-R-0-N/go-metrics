@@ -32,18 +32,6 @@ func main() {
 
 	router.Get("/", handlerStorage.GetMetrics)
 
-	// TODO обсудить с ментором
-
-	//router.Route("/update", func(r chi.Router) {
-	//	router.Post("/", handlers.BadRequest)
-	//	router.Route("/{type}", func(r chi.Router) {
-	//		router.Post("/", handlers.BadRequest)
-	//		router.Route("/{name}", func(r chi.Router) {
-	//			router.Post("/", handlers.BadRequest)
-	//			router.Post("/{data}", handlerStorage.UpdateMetrics)
-	//		})
-	//	})
-	//})
 	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
 
 	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
