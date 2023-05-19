@@ -54,6 +54,8 @@ func main() {
 
 	router.Get("/value/{type}/{name}", logger.WithLogging(handlerStorage.GetMetricsValue))
 
+	router.Post("/update/", logger.WithLogging(handlerStorage.UpdateMetricJSON))
+	router.Post("/value/", logger.WithLogging(handlerStorage.GetMetricJSON))
 	err = http.ListenAndServe(addr.String(), router)
 	if err != nil {
 		log.Fatal(err)

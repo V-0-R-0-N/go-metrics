@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -15,6 +17,12 @@ type (
 	gauge   float64
 	counter int64
 )
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
 
 type Storage interface {
 	PutGauge(name string, value gauge)
@@ -129,28 +137,56 @@ func CollectData(data Storage, PollCount *int, Mutex *sync.Mutex) error {
 
 func sendGauge(data Storage, addr *flags.NetAddress, name string) {
 
-	value := data.GetGauge(name)
-	url := fmt.Sprintf("http://%s/update/gauge/%s/%v", addr.String(), name, value)
+	value := float64(data.GetGauge(name))
+	metrics := Metrics{
+		ID:    name,
+		MType: "gauge",
+		Value: &value,
+	}
+	body, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	//url := fmt.Sprintf("http://%s/update/gauge/%s/%v", addr.String(), name, value)
+	url := fmt.Sprintf("http://%s/update/", addr.String())
+	r := strings.NewReader(string(body))
 	//fmt.Println(url) // Для тестов
-	resp, err := http.Post(url, "text/plain", nil)
+	//resp, err := http.Post(url, "text/plain", r)
+	resp, err := http.Post(url, "application/json", r)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		//fmt.Println("Bad response", name, value) // Для теста
 		return
 	}
 	defer resp.Body.Close()
+	//body, _ = io.ReadAll(resp.Body) // для теста
+	//fmt.Println(string(body))
 
 }
 
 func sendCounter(addr *flags.NetAddress, PollCount *int) {
 
-	url := fmt.Sprintf("http://%s/update/counter/PollCount/%v", addr.String(), IntToCounter(*PollCount))
-	resp, err := http.Post(url, "text/plain", nil)
+	value := int64(*PollCount)
+	metrics := Metrics{
+		ID:    "PollCount",
+		MType: "counter",
+		Delta: &value,
+	}
+	body, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	r := strings.NewReader(string(body))
+	url := fmt.Sprintf("http://%s/update/", addr.String())
+	//url := fmt.Sprintf("http://%s/update/counter/PollCount/%v", addr.String(), IntToCounter(*PollCount))
+	resp, err := http.Post(url, "application/json", r)
+	//resp, err := http.Post(url, "text/plain", nil)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		//fmt.Println("Bad response", "PollCount", PollCount) // Для теста
 		return
 	}
 	defer resp.Body.Close()
-
+	//body, _ = io.ReadAll(resp.Body) // для теста
+	//fmt.Println(string(body))
 }
 
 func SendData(data Storage, addr *flags.NetAddress, PollCount *int, Mutex *sync.Mutex) error {
