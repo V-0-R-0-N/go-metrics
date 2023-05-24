@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"log"
+	"net/http"
 	"sync"
 	"testing"
 )
@@ -147,8 +148,9 @@ func TestSendData(t *testing.T) { // Заглушка потому что нич
 	PollCount := 0
 
 	Mutex := sync.Mutex{}
+	client := http.Client{}
 	t.Run("Simple Test", func(t *testing.T) {
 		data := NewStorage()
-		SendData(data, &addr, &PollCount, &Mutex)
+		SendData(&client, data, &addr, &PollCount, &Mutex)
 	})
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"net/http"
 	"sync"
 	"time"
 
@@ -63,16 +64,18 @@ func main() {
 	go func() {
 		defer wg.Done()
 		counter := 0
+		client := http.Client{}
 		for {
 			time.Sleep(report.Interval)
 			select {
 			case <-ctx.Done():
 				return
 			default:
-				err := st.SendData(data, &addr, &PollCount, &Mutex)
+				err := st.SendData(&client, data, &addr, &PollCount, &Mutex)
 				if err == nil {
 					counter = 0
 				} else {
+					//fmt.Println(err) // для тестов
 					counter++
 					if counter == 3 {
 						cancel()

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/compress"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"log"
@@ -81,6 +82,8 @@ func (h *handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) GetMetrics(res http.ResponseWriter, _ *http.Request) {
+	res.Header().Set("Content-Type", "text/html")
+	res.WriteHeader(http.StatusOK)
 	_, _ = io.WriteString(res, fmt.Sprint(h.storage))
 }
 
@@ -111,7 +114,7 @@ func (h *handler) GetMetricsValue(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) UpdateMetricJSON(res http.ResponseWriter, req *http.Request) {
-	metrics := st.Metrics{}
+	metrics := compress.Metrics{}
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -139,7 +142,7 @@ func (h *handler) UpdateMetricJSON(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) GetMetricJSON(res http.ResponseWriter, req *http.Request) {
-	metrics := st.Metrics{}
+	metrics := compress.Metrics{}
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
