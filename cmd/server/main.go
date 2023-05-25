@@ -2,17 +2,17 @@ package main
 
 import (
 	"flag"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/filer"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/compress"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/logger"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
-
-	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
-	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
-	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
-	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
 )
 
 //var Log, _ = zap.NewDevelopment()
@@ -34,10 +34,16 @@ func main() {
 		Host: "localhost",
 		Port: 8080,
 	}
-	flags.Server(&addr)
+	FileR := flags.NewFileR()
+	flags.Server(&addr, FileR)
 	flag.Parse()
-	if err := environ.Server(&addr); err != nil {
+	if err := environ.Server(&addr, FileR); err != nil {
 		log.Fatal(err)
+	}
+
+	filer.FilerInit(FileR)
+	if FileR.File.File != nil {
+		defer filer.Close(&FileR.File)
 	}
 	sugar.Infow(
 		"Server start",
@@ -49,6 +55,7 @@ func main() {
 	//router.Use(middleware.Compress(5, "text/html", "application/json")) // для тестов
 	st := storage.NewStorage()
 
+	filer.StartRestore(st, FileR)
 	handlerStorage := handlers.NewHandlerStorage(st)
 
 	//router.Get("/", logger.WithLogging(handlerStorage.GetMetrics))

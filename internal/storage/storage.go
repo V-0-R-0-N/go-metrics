@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/compress"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -30,6 +32,7 @@ type Storage interface {
 type memStorage struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
+	FileR   *flags.FileR
 }
 
 func NewStorage() Storage {
@@ -41,11 +44,60 @@ func NewStorage() Storage {
 
 func (m *memStorage) PutGauge(name string, value gauge) {
 	m.Gauge[name] = value
+	if m.FileR != nil && m.FileR.Synchro {
+		n := float64(value)
+		err := SaveData(compress.Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: &n,
+		}, &m.FileR.File)
+		if err != nil {
+			//TODO
+			log.Fatal(err)
+		}
+	}
 }
 
 func (m *memStorage) PutCounter(name string, value counter) {
 	m.Counter[name] += value
+	if m.FileR != nil && m.FileR.Synchro {
+		n := int64(value)
+		err := SaveData(compress.Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &n,
+		}, &m.FileR.File)
+		if err != nil {
+			//TODO
+			log.Fatal(err)
+		}
+	}
 }
+
+// TODO обсудить с ментором как избежать цикличности в этом случае
+
+func SaveData(metrics compress.Metrics, f *flags.OsFile) error {
+	byteArr, err := json.Marshal(metrics)
+	if err != nil {
+		return err
+	}
+	byteArr = append(byteArr, byte('\n'))
+	err = writeDataToFile(byteArr, f)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeDataToFile(data []byte, f *flags.OsFile) error {
+	_, err := f.File.Write(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO end
 
 func (m *memStorage) GetGauge(name string) gauge {
 	return m.Gauge[name]

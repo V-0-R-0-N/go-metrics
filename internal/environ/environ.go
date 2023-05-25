@@ -19,9 +19,18 @@ func parseFlag(data allFlags, name string) error {
 	return nil
 }
 
-func Server(addr *flags.NetAddress) error {
+func Server(addr *flags.NetAddress, FileR *flags.FileR) error {
 
 	if err := parseFlag(addr, "ADDRESS"); err != nil {
+		return err
+	}
+	if err := parseFlag(&FileR.Interval, "STORE_INTERVAL"); err != nil {
+		return err
+	}
+	if err := parseFlag(&FileR.Path, "FILE_STORAGE_PATH"); err != nil {
+		return err
+	}
+	if err := parseFlag(&FileR.Path, "RESTORE"); err != nil {
 		return err
 	}
 	return nil
