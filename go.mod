@@ -1,8 +1,9 @@
 module github.com/V-0-R-0-N/go-metrics.git
 
-go 1.19
+go 1.20
 
 require (
+	github.com/AlekSi/pointer v1.2.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/zap v1.24.0

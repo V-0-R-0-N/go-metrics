@@ -6,26 +6,25 @@ import (
 	"time"
 )
 
-//type Logger interface {
-//	Infoln(args ...interface{})
-//}
-
-var sugar *zap.SugaredLogger
+type Logger interface {
+	Infoln(args ...interface{})
+	Infow(msg string, keysAndValues ...interface{})
+}
 
 //type LoggerMiddlware struct {
 //	sugar Logger
 //}
 
-func NewSugarLogger(Log *zap.Logger) *zap.SugaredLogger {
-	//return
-	//return &LoggerMiddlware{
-	//	sugar: log,
-	//}
-	sugar = Log.Sugar()
+func NewSugarLogger(log *zap.Logger) Logger {
+	sugar := log.Sugar()
 	return sugar
 }
 
-func WithLogging(h http.Handler) http.Handler {
+type Middlware struct {
+	Log Logger
+}
+
+func (l *Middlware) WithLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// функция Now() возвращает текущее время
 		start := time.Now()
@@ -53,7 +52,7 @@ func WithLogging(h http.Handler) http.Handler {
 		duration := time.Since(start)
 
 		// отправляем сведения о запросе в zap
-		sugar.Infoln(
+		l.Log.Infoln(
 			//"HTTP request",
 			"URI", uri,
 			"method", method,

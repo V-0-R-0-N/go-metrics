@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+const fileRestoreFlagTrue = "true"
+const fileRestoreFlagFalse = "false"
+
 type NetAddress struct {
 	Host string
 	Port int
@@ -23,29 +26,25 @@ type Report struct {
 	Interval time.Duration
 }
 
-type FileR struct {
-	Interval    FileInterval
-	Path        FilePath
-	FileRestore Restore
+type FileRestore struct {
+	Interval    fileInterval
+	Path        filePath
+	FileRestore restore
 	Synchro     bool
 	Restore     bool
-	File        OsFile
+	File        *os.File
 }
 
-type FileInterval struct {
+type fileInterval struct {
 	Data time.Duration
 }
 
-type FilePath struct {
+type filePath struct {
 	Data string
 }
 
-type Restore struct {
+type restore struct {
 	Data bool
-}
-
-type OsFile struct {
-	File *os.File
 }
 
 func (a *NetAddress) String() string {
@@ -106,11 +105,11 @@ func (r *Report) Set(s string) error {
 	return nil
 }
 
-func (fi *FileInterval) String() string {
+func (fi *fileInterval) String() string {
 	return fmt.Sprintf("%d", fi.Data/time.Second)
 }
 
-func (fi *FileInterval) Set(s string) error {
+func (fi *fileInterval) Set(s string) error {
 	num, err := strconv.Atoi(s)
 	if err != nil {
 		return err
@@ -122,11 +121,11 @@ func (fi *FileInterval) Set(s string) error {
 	return nil
 }
 
-func (fi *FilePath) String() string {
+func (fi *filePath) String() string {
 	return fi.Data
 }
 
-func (fi *FilePath) Set(s string) error {
+func (fi *filePath) Set(s string) error {
 
 	s = strings.TrimSpace(s)
 	if len(s) != 0 {
@@ -135,15 +134,15 @@ func (fi *FilePath) Set(s string) error {
 	return nil
 }
 
-func (fi *Restore) String() string {
+func (fi *restore) String() string {
 	return fmt.Sprintf("%v", fi.Data)
 }
 
-func (fi *Restore) Set(s string) error {
+func (fi *restore) Set(s string) error {
 
-	if s == "true" {
+	if s == fileRestoreFlagTrue {
 		fi.Data = true
-	} else if s == "false" {
+	} else if s == fileRestoreFlagFalse {
 		fi.Data = false
 	} else {
 		return errors.New("you can use only 'true' or 'false'")
@@ -151,20 +150,21 @@ func (fi *Restore) Set(s string) error {
 	return nil
 }
 
-func NewFileR() *FileR {
-	return &FileR{
-		Interval: FileInterval{
+func NewFileRestore() *FileRestore {
+	return &FileRestore{
+		Interval: fileInterval{
 			Data: 300 * time.Second,
 		},
-		Path: FilePath{
+		Path: filePath{
 			Data: "/tmp/metrics-db.json",
 		},
-		FileRestore: Restore{
+		FileRestore: restore{
 			Data: true,
 		},
 	}
 }
-func Server(addr *NetAddress, file *FileR) {
+
+func Server(addr *NetAddress, file *FileRestore) {
 	_ = flag.Value(addr)
 	_ = flag.Value(&file.Interval)
 	_ = flag.Value(&file.Path)

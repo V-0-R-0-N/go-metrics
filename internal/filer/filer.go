@@ -2,6 +2,7 @@ package filer
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/compress"
@@ -11,22 +12,18 @@ import (
 	"time"
 )
 
-func NewFile(filename string, f *flags.OsFile) {
+func NewFile(filename string) *os.File {
 	fl, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
-	f.File = fl
+	return fl
 }
 
-func Close(f *flags.OsFile) {
-	f.File.Close()
-}
-
-func FilerInit(FileR *flags.FileR) {
+func FilerInit(FileR *flags.FileRestore) {
 	if FileR.Path.Data != "" {
 		FileR.Restore = true
-		NewFile(FileR.Path.Data, &FileR.File)
+		FileR.File = NewFile(FileR.Path.Data)
 		//defer Close(&FileR.File)
 	}
 	if FileR.Interval.Data == 0 {
@@ -34,9 +31,9 @@ func FilerInit(FileR *flags.FileR) {
 	}
 }
 
-func StartRestore(st storage.Storage, FileR *flags.FileR) {
+func StartRestore(ctx context.Context, st storage.Storage, FileR *flags.FileRestore) {
 	if FileR.FileRestore.Data {
-		err := RestoreData(st, &FileR.File)
+		err := RestoreData(st, FileR.File)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,8 +41,13 @@ func StartRestore(st storage.Storage, FileR *flags.FileR) {
 	if !FileR.Synchro {
 		go func() {
 			for {
-				time.Sleep(FileR.Interval.Data)
-				SaveAllData(st, &FileR.File)
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					time.Sleep(FileR.Interval.Data)
+					SaveAllData(st, FileR.File)
+				}
 			}
 		}()
 	} else {
@@ -53,7 +55,7 @@ func StartRestore(st storage.Storage, FileR *flags.FileR) {
 	}
 }
 
-func SaveAllData(data storage.Storage, f *flags.OsFile) error {
+func SaveAllData(data storage.Storage, f *os.File) error {
 	allData := data.GetStorage()
 	metrics := compress.Metrics{}
 	metrics.MType = "gauge"
@@ -92,7 +94,7 @@ func SaveAllData(data storage.Storage, f *flags.OsFile) error {
 	return nil
 }
 
-func SaveData(metrics compress.Metrics, f *flags.OsFile) error {
+func SaveData(metrics compress.Metrics, f *os.File) error {
 	byteArr, err := json.Marshal(metrics)
 	if err != nil {
 		return err
@@ -104,18 +106,19 @@ func SaveData(metrics compress.Metrics, f *flags.OsFile) error {
 	}
 	return nil
 }
-func writeDataToFile(data []byte, f *flags.OsFile) error {
-	_, err := f.File.Write(data)
+
+func writeDataToFile(data []byte, f *os.File) error {
+	_, err := f.Write(data)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func RestoreData(data storage.Storage, f *flags.OsFile) error {
+func RestoreData(data storage.Storage, f *os.File) error {
 
 	metrics := compress.Metrics{}
-	scanner := bufio.NewScanner(f.File)
+	scanner := bufio.NewScanner(f)
 	// optionally, resize scanner's capacity for lines over 64K, see next example
 	for scanner.Scan() {
 		//fmt.Println(scanner.Text()) // для теста

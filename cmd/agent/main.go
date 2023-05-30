@@ -30,12 +30,10 @@ func main() {
 		Port: 8080,
 	}
 	flags.Agent(&addr, &poll, &report)
-	//fmt.Println(addr, poll.Interval, report.Interval) // Для теста
 	flag.Parse()
 	if err := environ.Agent(&addr, &poll, &report); err != nil {
 		panic(err)
 	}
-	//fmt.Println(addr, poll.Interval, report.Interval) // Для теста
 	data := st.NewStorage()
 	ctx, cancel := context.WithCancel(context.Background())
 	wg.Add(1)
@@ -75,7 +73,6 @@ func main() {
 				if err == nil {
 					counter = 0
 				} else {
-					//fmt.Println(err) // для тестов
 					counter++
 					if counter == 3 {
 						cancel()

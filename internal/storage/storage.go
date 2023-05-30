@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -32,7 +33,7 @@ type Storage interface {
 type memStorage struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
-	FileR   *flags.FileR
+	FileR   *flags.FileRestore
 }
 
 func NewStorage() Storage {
@@ -50,7 +51,7 @@ func (m *memStorage) PutGauge(name string, value gauge) {
 			ID:    name,
 			MType: "gauge",
 			Value: &n,
-		}, &m.FileR.File)
+		}, m.FileR.File)
 		if err != nil {
 			//TODO
 			log.Fatal(err)
@@ -66,7 +67,7 @@ func (m *memStorage) PutCounter(name string, value counter) {
 			ID:    name,
 			MType: "counter",
 			Delta: &n,
-		}, &m.FileR.File)
+		}, m.FileR.File)
 		if err != nil {
 			//TODO
 			log.Fatal(err)
@@ -74,30 +75,18 @@ func (m *memStorage) PutCounter(name string, value counter) {
 	}
 }
 
-// TODO обсудить с ментором как избежать цикличности в этом случае
-
-func SaveData(metrics compress.Metrics, f *flags.OsFile) error {
-	byteArr, err := json.Marshal(metrics)
+func SaveData(date interface{}, f *os.File) error {
+	byteArr, err := json.Marshal(date)
 	if err != nil {
 		return err
 	}
 	byteArr = append(byteArr, byte('\n'))
-	err = writeDataToFile(byteArr, f)
+	_, err = f.Write(byteArr)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
-func writeDataToFile(data []byte, f *flags.OsFile) error {
-	_, err := f.File.Write(data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// TODO end
 
 func (m *memStorage) GetGauge(name string) gauge {
 	return m.Gauge[name]

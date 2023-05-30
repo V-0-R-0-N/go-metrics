@@ -4,9 +4,6 @@
 *.dll
 *.so
 *.dylib
-Taskfile.yml
-true
-false
 # Test binary, built with `go test -c`
 *.test
 
