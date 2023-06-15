@@ -1,7 +1,10 @@
 package storage
 
 import (
+	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"log"
+	"net/http"
+	"sync"
 	"testing"
 )
 
@@ -99,4 +102,55 @@ func TestPutCounter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCollectData(t *testing.T) {
+	PollCount := 0
+	Mutex := sync.Mutex{}
+	tests := []struct {
+		name string
+		test string
+		want bool
+	}{
+		{
+			name: "Simple test 1(Alloc)",
+			test: "Alloc",
+			want: true,
+		},
+		{
+			name: "Simple test 2(Frees)",
+			test: "Frees",
+			want: true,
+		},
+		{
+			name: "Simple test 3(Wrong data)",
+			test: "Wrong MemStorage",
+			want: false,
+		},
+	}
+	data := NewStorage()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			CollectData(data, &PollCount, &Mutex)
+			if _, ok := data.GetStorage().Gauge[test.test]; ok != test.want {
+				log.Fatalf("Have no element: \"%s\"\n", test.test)
+			}
+		})
+	}
+}
+
+func TestSendData(t *testing.T) { // Заглушка потому что ничего не возвращает
+
+	addr := flags.NetAddress{
+		Host: "localhost",
+		Port: 8080,
+	}
+	PollCount := 0
+
+	Mutex := sync.Mutex{}
+	client := http.Client{}
+	t.Run("Simple Test", func(t *testing.T) {
+		data := NewStorage()
+		SendData(&client, data, &addr, &PollCount, &Mutex)
+	})
 }

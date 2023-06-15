@@ -14,8 +14,9 @@ func TestServer(t *testing.T) {
 		Port: 8080,
 	}
 
+	FileR := flags.FileRestore{}
 	t.Run("Simple test", func(t *testing.T) {
-		Server(&addr)
+		Server(&addr, &FileR)
 		if addr.String() != "localhost:8080" {
 			log.Fatal("Error Test 1")
 		}

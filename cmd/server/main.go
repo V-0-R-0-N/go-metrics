@@ -1,54 +1,66 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"github.com/go-chi/chi/v5"
-	"log"
-	"net/http"
-
 	"github.com/V-0-R-0-N/go-metrics.git/internal/environ"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/filer"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/flags"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/handlers"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/logger"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/router"
 	"github.com/V-0-R-0-N/go-metrics.git/internal/storage"
+	"go.uber.org/zap"
+	"log"
+	"net/http"
 )
 
 func main() {
+
+	myLogger, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	if myLogger != nil {
+		defer myLogger.Sync()
+	}
+	sugar := logger.NewSugarLogger(myLogger)
+
 	addr := flags.NetAddress{
 		Host: "localhost",
 		Port: 8080,
 	}
-	flags.Server(&addr)
+	fileRestore := flags.NewFileRestore()
+	flags.Server(&addr, fileRestore)
 	flag.Parse()
-	if err := environ.Server(&addr); err != nil {
+	if err := environ.Server(&addr, fileRestore); err != nil {
 		log.Fatal(err)
 	}
 
-	router := chi.NewRouter()
-	//router.Use(middleware.Logger) // Для тестов
+	filer.FilerInit(fileRestore)
+	if fileRestore.File != nil {
+		defer fileRestore.File.Close()
+	}
+	sugar.Infow(
+		"Server start",
+		zap.String("address: ", addr.String()),
+	)
 
 	st := storage.NewStorage()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	filer.StartRestore(ctx, st, fileRestore)
 	handlerStorage := handlers.NewHandlerStorage(st)
 
-	router.Get("/", handlerStorage.GetMetrics)
+	logMiddlware := logger.Middlware{
+		Log: sugar,
+	}
 
-	// TODO обсудить с ментором
+	routerChi := router.Router(logMiddlware, handlerStorage)
 
-	//router.Route("/update", func(r chi.Router) {
-	//	router.Post("/", handlers.BadRequest)
-	//	router.Route("/{type}", func(r chi.Router) {
-	//		router.Post("/", handlers.BadRequest)
-	//		router.Route("/{name}", func(r chi.Router) {
-	//			router.Post("/", handlers.BadRequest)
-	//			router.Post("/{data}", handlerStorage.UpdateMetrics)
-	//		})
-	//	})
-	//})
-	router.HandleFunc("/update/*", handlerStorage.UpdateMetrics)
-
-	router.Get("/value/{type}/{name}", handlerStorage.GetMetricsValue)
-
-	err := http.ListenAndServe(addr.String(), router)
+	err = http.ListenAndServe(addr.String(), routerChi)
 	if err != nil {
 		log.Fatal(err)
 	}

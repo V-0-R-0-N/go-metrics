@@ -1,15 +1,20 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	ch "github.com/V-0-R-0-N/go-metrics.git/internal/checkers"
+	"github.com/V-0-R-0-N/go-metrics.git/internal/middlware/compress"
 	st "github.com/V-0-R-0-N/go-metrics.git/internal/storage"
+
+	"github.com/AlekSi/pointer"
 )
 
 func BadRequest(res http.ResponseWriter, _ *http.Request) {
@@ -27,15 +32,15 @@ func updateValidator(splURI []string, req *http.Request) bool {
 	return false
 }
 
-type handler struct {
+type Handler struct {
 	storage st.Storage
 }
 
-func NewHandlerStorage(storage st.Storage) *handler {
-	return &handler{storage}
+func NewHandlerStorage(storage st.Storage) *Handler {
+	return &Handler{storage}
 }
 
-func (h *handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
+func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 
 	if req.Method == http.MethodPost {
 
@@ -78,11 +83,13 @@ func (h *handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 	BadRequest(res, req)
 }
 
-func (h *handler) GetMetrics(res http.ResponseWriter, _ *http.Request) {
+func (h *Handler) GetMetrics(res http.ResponseWriter, _ *http.Request) {
+	res.Header().Set("Content-Type", "text/html")
+	res.WriteHeader(http.StatusOK)
 	_, _ = io.WriteString(res, fmt.Sprint(h.storage))
 }
 
-func (h *handler) GetMetricsValue(res http.ResponseWriter, req *http.Request) {
+func (h *Handler) GetMetricsValue(res http.ResponseWriter, req *http.Request) {
 
 	t := chi.URLParam(req, "type")
 	name := chi.URLParam(req, "name")
@@ -106,4 +113,65 @@ func (h *handler) GetMetricsValue(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 		_, _ = io.WriteString(res, fmt.Sprint(h.storage.GetStorage().Counter[name]))
 	}
+}
+
+func (h *Handler) UpdateMetricJSON(res http.ResponseWriter, req *http.Request) {
+	metrics := compress.Metrics{}
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = json.Unmarshal(body, &metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if metrics.MType == "counter" {
+		h.storage.PutCounter(metrics.ID, st.IntToCounter(int(*metrics.Delta)))
+
+		*metrics.Delta = int64(h.storage.GetCounter(metrics.ID))
+	} else if metrics.MType == "gauge" {
+		h.storage.PutGauge(metrics.ID, st.Float64ToGauge(*metrics.Value))
+	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	body, err = json.Marshal(metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	res.Write(body)
+}
+
+func (h *Handler) GetMetricJSON(res http.ResponseWriter, req *http.Request) {
+	metrics := compress.Metrics{}
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = json.Unmarshal(body, &metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if metrics.MType == "counter" {
+		if _, ok := h.storage.GetStorage().Counter[metrics.ID]; !ok {
+			res.WriteHeader(http.StatusNotFound)
+			return
+		}
+		metrics.Delta = pointer.ToInt64(int64(h.storage.GetCounter(metrics.ID)))
+	} else if metrics.MType == "gauge" {
+		if _, ok := h.storage.GetStorage().Gauge[metrics.ID]; !ok {
+			res.WriteHeader(http.StatusNotFound)
+			return
+		}
+		metrics.Value = pointer.ToFloat64(float64(h.storage.GetGauge(metrics.ID)))
+	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	body, err = json.Marshal(metrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	res.Write(body)
 }
